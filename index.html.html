@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>認證管理系統 | Certification Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+:root{
+  --bg:#f4f6f9;--sidebar:#1e2533;--sidebar2:#252d3d;--surface:#fff;--surface2:#f8f9fb;
+  --border:#e8ecf2;--accent:#3b82f6;--accent-lt:#eff6ff;
+  --prod:#6366f1;--prod-lt:#eef2ff;
+  --factory:#0891b2;--factory-lt:#ecfeff;
+  --system:#059669;--system-lt:#ecfdf5;
+  --danger:#ef4444;--danger-lt:#fef2f2;
+  --warning:#f59e0b;--warning-lt:#fffbeb;
+  --text:#111827;--text2:#6b7280;--text3:#9ca3af;--textw:#e5e7eb;--textw2:#9ca3af;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--sidebar);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.h-brand{display:flex;align-items:center;gap:12px;}
+.h-logo{width:32px;height:32px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.h-logo svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.2;}
+.h-title{font-size:14px;font-weight:700;color:#fff;letter-spacing:.3px;}
+.h-sub{font-size:10px;color:var(--textw2);margin-top:1px;}
+.h-right{display:flex;align-items:center;gap:10px;}
+.h-date{font-size:11px;color:var(--textw2);font-family:"Space Mono";}
+.upload-btn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-family:"Noto Sans TC";font-size:12px;font-weight:500;transition:.15s;}
+.upload-btn:hover{background:rgba(255,255,255,.18);}
+.upload-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+#fileInput{display:none;}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;height:calc(100vh - 56px);}
+
+/* SIDEBAR */
+aside{width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;overflow-y:auto;padding-bottom:16px;}
+.nav-grp-label{font-size:10px;font-weight:700;letter-spacing:1.4px;color:var(--textw2);text-transform:uppercase;padding:16px 18px 6px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;border-left:3px solid transparent;font-size:12.5px;color:var(--textw2);font-weight:500;transition:.12s;user-select:none;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--accent);}
+.nav-item.act-prod{border-left-color:var(--prod)!important;color:#fff;}
+.nav-item.act-factory{border-left-color:var(--factory)!important;color:#fff;}
+.nav-item.act-system{border-left-color:var(--system)!important;color:#fff;}
+.nav-item.act-danger{border-left-color:var(--danger)!important;color:var(--danger)!important;}
+.nav-item.act-warning{border-left-color:var(--warning)!important;color:var(--warning)!important;}
+.nav-item svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0;opacity:.7;}
+.nav-badge{margin-left:auto;font-family:"Space Mono";font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(255,255,255,.1);color:var(--textw2);}
+.nav-badge.bd{background:rgba(239,68,68,.2);color:#fca5a5;}
+.nav-badge.bw{background:rgba(245,158,11,.2);color:#fcd34d;}
+.nav-divider{height:1px;background:rgba(255,255,255,.07);margin:8px 14px;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+
+/* PAGE HEADER */
+.pg-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.pg-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.pg-title{font-size:17px;font-weight:700;color:var(--text);}
+.pg-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* PANELS */
+.panel{display:none;}.panel.active{display:block;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px 18px;box-shadow:var(--sh);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:14px;}
+.stat-card:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
+.stat-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.stat-val{font-family:"Space Mono";font-size:28px;font-weight:700;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:3px;}
+.stat-card.sc-all .stat-ico{background:var(--accent-lt);} .stat-card.sc-all .stat-val{color:var(--accent);}
+.stat-card.sc-prod .stat-ico{background:var(--prod-lt);} .stat-card.sc-prod .stat-val{color:var(--prod);}
+.stat-card.sc-exp .stat-ico{background:var(--danger-lt);} .stat-card.sc-exp .stat-val{color:var(--danger);}
+.stat-card.sc-warn .stat-ico{background:var(--warning-lt);} .stat-card.sc-warn .stat-val{color:var(--warning);}
+
+/* CATEGORY TABS (in overview) */
+.cat-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.cat-tab{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:.15s;border-top:3px solid transparent;box-shadow:var(--sh);}
+.cat-tab:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
+.cat-tab.ct-prod{border-top-color:var(--prod);}
+.cat-tab.ct-factory{border-top-color:var(--factory);}
+.cat-tab.ct-system{border-top-color:var(--system);}
+.ct-name{font-size:14px;font-weight:700;margin-bottom:10px;}
+.ct-prod .ct-name{color:var(--prod);} .ct-factory .ct-name{color:var(--factory);} .ct-system .ct-name{color:var(--system);}
+.ct-stats{display:flex;gap:20px;}
+.ct-sv{font-family:"Space Mono";font-size:22px;font-weight:700;color:var(--text);}
+.ct-sl{font-size:10px;color:var(--text2);margin-top:2px;}
+
+/* ALERT CARDS */
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.alert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:24px;}
+.ac{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:7px;transition:.12s;}
+.ac:hover{box-shadow:var(--sh2);}
+.ac-exp{border-left:3px solid var(--danger);}
+.ac-warn{border-left:3px solid var(--warning);}
+.ac-r1{display:flex;align-items:flex-start;gap:8px;}
+.ac-cat{font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.ac-cat.cp{background:var(--prod-lt);color:var(--prod);}
+.ac-cat.cf{background:var(--factory-lt);color:var(--factory);}
+.ac-cat.cs{background:var(--system-lt);color:var(--system);}
+.ac-name{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;flex:1;}
+.ac-pill{font-family:"Space Mono";font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.pill-e{background:var(--danger-lt);color:var(--danger);}
+.pill-w{background:var(--warning-lt);color:var(--warning);}
+.ac-r2{display:flex;gap:8px;flex-wrap:wrap;}
+.ac-tag{font-size:11px;color:var(--text2);}
+.ac-tag strong{color:var(--text);font-weight:600;}
+
+/* TABLE */
+.tbl-bar{display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.search-box{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-family:"Noto Sans TC";font-size:13px;color:var(--text);outline:none;transition:.15s;box-shadow:var(--sh);}
+.search-box:focus{border-color:var(--accent);}
+.search-box::placeholder{color:var(--text3);}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden;box-shadow:var(--sh);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--surface2);padding:10px 13px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:.12s;}
+thead th:hover{color:var(--accent);}
+thead th.sa::after{content:" ↑";color:var(--accent);}
+thead th.sd::after{content:" ↓";color:var(--accent);}
+tbody tr{border-bottom:1px solid var(--border);transition:.1s;}
+tbody tr:hover{background:var(--surface2);}
+tbody tr:last-child{border-bottom:none;}
+tbody td{padding:10px 13px;font-size:12.5px;vertical-align:middle;}
+.td-no{font-family:"Space Mono";font-size:10.5px;color:var(--text3);width:34px;}
+.td-name{font-weight:500;max-width:260px;}
+.td-note{font-size:11px;color:var(--warning);font-style:italic;}
+.cat-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-block;white-space:nowrap;}
+.cat-p{background:var(--prod-lt);color:var(--prod);}
+.cat-f{background:var(--factory-lt);color:var(--factory);}
+.cat-s{background:var(--system-lt);color:var(--system);}
+.unit-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-block;}
+.u-ABS{background:#e0f2fe;color:#0369a1;} .u-SGS{background:#fff7ed;color:#c2410c;}
+.u-DGUV{background:#f0fdf4;color:#15803d;} .u-DNV{background:#faf5ff;color:#7e22ce;}
+.u-AI{background:#fdf2f8;color:#9d174d;} .u-OSHCI{background:#fefce8;color:#854d0e;}
+.u-CCS{background:#f0f9ff;color:#0c4a6e;} .u-API{background:#fff7ed;color:#9a3412;}
+.u-TAF{background:#f5f3ff;color:#5b21b6;}
+.sbadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:"Space Mono";}
+.s-P{background:#f0fdf4;color:#15803d;} .s-N{background:var(--danger-lt);color:var(--danger);}
+.dc{font-family:"Space Mono";font-size:11px;}
+.d-e{color:var(--danger);font-weight:700;} .d-w{color:var(--warning);font-weight:700;}
+.d-ok{color:var(--text3);} .d-p{color:#15803d;}
+.pc{font-family:"Space Mono";font-size:12px;font-weight:700;color:var(--accent);}
+
+/* PAGINATION */
+.pag{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:1px solid var(--border);background:var(--surface2);}
+.pag-info{font-size:11px;color:var(--text2);font-family:"Space Mono";}
+.pag-btns{display:flex;gap:4px;}
+.pb{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:.12s;font-family:"Space Mono";}
+.pb:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt);}
+.pb.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;}
+.pb:disabled{opacity:.3;cursor:not-allowed;}
+
+/* DETAIL PANEL for factory/system cards */
+.cert-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+.cert-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--sh);transition:.15s;}
+.cert-card:hover{box-shadow:var(--sh2);}
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px;}
+.cc-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;flex:1;}
+.cc-body{display:flex;flex-direction:column;gap:6px;}
+.cc-row{display:flex;gap:8px;font-size:12px;}
+.cc-lbl{color:var(--text2);width:60px;flex-shrink:0;}
+.cc-val{color:var(--text);font-weight:500;}
+.cc-note{margin-top:8px;padding:8px 10px;background:var(--warning-lt);border-radius:6px;font-size:11px;color:var(--warning);font-style:italic;}
+
+#toast{position:fixed;bottom:20px;right:20px;background:var(--sidebar);color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;opacity:0;transform:translateY(6px);transition:.22s;pointer-events:none;z-index:9999;box-shadow:var(--sh2);}
+#toast.show{opacity:1;transform:translateY(0);}
+.empty{padding:20px;color:var(--text3);font-size:13px;}
+</style>
+</head>
+<body>
+
+
+<header>
+  <div class="h-brand">
+    <div class="h-logo"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg></div>
+    <div><div class="h-title">認證管理系統</div><div class="h-sub">Certification Management Dashboard</div></div>
+  </div>
+  <div class="h-right">
+    <div class="h-date" id="hDate"></div>
+    <div id="sync-status" style="font-size:11px;color:var(--textw2);font-family:'Space Mono';margin-right:4px;"></div>
+    <button class="upload-btn" onclick="loadData()" id="refresh-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      重新整理
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+<aside>
+  <div class="nav-grp-label">總覽</div>
+  <div class="nav-item active" id="n-ov" onclick="go('ov',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    儀表板
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-grp-label">認證分類</div>
+  <div class="nav-item" id="n-prod" onclick="go('prod',this)">
+    <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="1"/></svg>
+    產品認證
+    <span class="nav-badge" id="nb-prod">0</span>
+  </div>
+  <div class="nav-item" id="n-factory" onclick="go('factory',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    工廠認證
+    <span class="nav-badge" id="nb-factory">0</span>
+  </div>
+  <div class="nav-item" id="n-system" onclick="go('system',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    管理系統
+    <span class="nav-badge" id="nb-system">0</span>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-grp-label">警示</div>
+  <div class="nav-item" id="n-expired" onclick="go('expired',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    已到期
+    <span class="nav-badge bd" id="nb-expired">0</span>
+  </div>
+  <div class="nav-item" id="n-warning" onclick="go('warning',this)">
+    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    6個月內到期
+    <span class="nav-badge bw" id="nb-warn">0</span>
+  </div>
+</aside>
+
+<div class="content">
+
+<!-- OVERVIEW -->
+<div class="panel active" id="p-ov">
+  <div class="stats-row">
+    <div class="stat-card sc-all" onclick="go('prod',document.getElementById('n-prod'))">
+      <div class="stat-ico">📋</div>
+      <div><div class="stat-val" id="sv-total">—</div><div class="stat-lbl">認證總項數</div></div>
+    </div>
+    <div class="stat-card sc-prod" onclick="go('prod',document.getElementById('n-prod'))">
+      <div class="stat-ico">🏷️</div>
+      <div><div class="stat-val" id="sv-parts">—</div><div class="stat-lbl">涵蓋料號</div></div>
+    </div>
+    <div class="stat-card sc-exp" onclick="go('expired',document.getElementById('n-expired'))">
+      <div class="stat-ico">⚠️</div>
+      <div><div class="stat-val" id="sv-exp">—</div><div class="stat-lbl">已到期</div></div>
+    </div>
+    <div class="stat-card sc-warn" onclick="go('warning',document.getElementById('n-warning'))">
+      <div class="stat-ico">🕐</div>
+      <div><div class="stat-val" id="sv-warn">—</div><div class="stat-lbl">6個月內到期</div></div>
+    </div>
+  </div>
+  <div class="cat-tabs">
+    <div class="cat-tab ct-prod" onclick="go('prod',document.getElementById('n-prod'))">
+      <div class="ct-name">🏷️ 產品認證</div>
+      <div class="ct-stats">
+        <div><div class="ct-sv" id="ct-prod-cnt">—</div><div class="ct-sl">認證項目</div></div>
+        <div><div class="ct-sv" id="ct-prod-parts">—</div><div class="ct-sl">料號數量</div></div>
+        <div><div class="ct-sv" id="ct-prod-exp">—</div><div class="ct-sl">到期 / 警示</div></div>
+      </div>
+    </div>
+    <div class="cat-tab ct-factory" onclick="go('factory',document.getElementById('n-factory'))">
+      <div class="ct-name">🏭 工廠認證</div>
+      <div class="ct-stats">
+        <div><div class="ct-sv" id="ct-fac-cnt">—</div><div class="ct-sl">認證項目</div></div>
+        <div><div class="ct-sv" id="ct-fac-exp">—</div><div class="ct-sl">到期 / 警示</div></div>
+      </div>
+    </div>
+    <div class="cat-tab ct-system" onclick="go('system',document.getElementById('n-system'))">
+      <div class="ct-name">⚙️ 管理系統</div>
+      <div class="ct-stats">
+        <div><div class="ct-sv" id="ct-sys-cnt">—</div><div class="ct-sl">認證項目</div></div>
+        <div><div class="ct-sv" id="ct-sys-exp">—</div><div class="ct-sl">到期 / 警示</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="ov-alerts" style="display:none"></div>
+</div>
+
+<!-- PRODUCT -->
+<div class="panel" id="p-prod">
+  <div class="pg-header">
+    <div class="pg-icon" style="background:var(--prod-lt)">🏷️</div>
+    <div><div class="pg-title">產品認證</div><div class="pg-sub">Product Certification — 料號、證書與到期管理</div></div>
+  </div>
+  <div class="tbl-bar">
+    <input class="search-box" type="text" id="sb-prod" placeholder="🔍 搜尋認證名稱、證書號碼、認證單位..." oninput="filterTable('prod')">
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortT('prod','no')">#</th>
+        <th onclick="sortT('prod','unit')">認證單位</th>
+        <th onclick="sortT('prod','name')">認證項目</th>
+        <th onclick="sortT('prod','certNo')">證書號碼</th>
+        <th onclick="sortT('prod','issueDate')">取證日</th>
+        <th onclick="sortT('prod','expDate')">到期日</th>
+        <th onclick="sortT('prod','daysLeft')">剩餘天數</th>
+        <th onclick="sortT('prod','status')">狀態</th>
+        <th onclick="sortT('prod','partCount')" style="text-align:right">料號數</th>
+        <th>備註</th>
+      </tr></thead>
+      <tbody id="tb-prod"></tbody>
+    </table>
+    <div class="pag"><div class="pag-info" id="pi-prod"></div><div class="pag-btns" id="pb-prod"></div></div>
+  </div>
+</div>
+
+<!-- FACTORY -->
+<div class="panel" id="p-factory">
+  <div class="pg-header">
+    <div class="pg-icon" style="background:var(--factory-lt)">🏭</div>
+    <div><div class="pg-title">工廠認證</div><div class="pg-sub">Factory Certification — 工廠資格與認可證書</div></div>
+  </div>
+  <div class="tbl-bar">
+    <input class="search-box" type="text" id="sb-factory" placeholder="🔍 搜尋認證名稱、證書號碼、認證單位..." oninput="filterTable('factory')">
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortT('factory','no')">#</th>
+        <th onclick="sortT('factory','unit')">認證單位</th>
+        <th onclick="sortT('factory','name')">認證項目</th>
+        <th onclick="sortT('factory','certNo')">證書號碼</th>
+        <th onclick="sortT('factory','issueDate')">取證日</th>
+        <th onclick="sortT('factory','expDate')">到期日</th>
+        <th onclick="sortT('factory','daysLeft')">剩餘天數</th>
+        <th onclick="sortT('factory','status')">狀態</th>
+        <th>備註</th>
+      </tr></thead>
+      <tbody id="tb-factory"></tbody>
+    </table>
+    <div class="pag"><div class="pag-info" id="pi-factory"></div><div class="pag-btns" id="pb-factory"></div></div>
+  </div>
+</div>
+
+<!-- SYSTEM -->
+<div class="panel" id="p-system">
+  <div class="pg-header">
+    <div class="pg-icon" style="background:var(--system-lt)">⚙️</div>
+    <div><div class="pg-title">管理系統</div><div class="pg-sub">Management System — ISO / API / TAF 等管理體系認證</div></div>
+  </div>
+  <div class="tbl-bar">
+    <input class="search-box" type="text" id="sb-system" placeholder="🔍 搜尋認證名稱、證書號碼、認證單位..." oninput="filterTable('system')">
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortT('system','no')">#</th>
+        <th onclick="sortT('system','unit')">認證單位</th>
+        <th onclick="sortT('system','name')">認證項目</th>
+        <th onclick="sortT('system','certNo')">證書號碼</th>
+        <th onclick="sortT('system','issueDate')">取證日</th>
+        <th onclick="sortT('system','expDate')">到期日</th>
+        <th onclick="sortT('system','daysLeft')">剩餘天數</th>
+        <th onclick="sortT('system','status')">狀態</th>
+        <th>備註</th>
+      </tr></thead>
+      <tbody id="tb-system"></tbody>
+    </table>
+    <div class="pag"><div class="pag-info" id="pi-system"></div><div class="pag-btns" id="pb-system"></div></div>
+  </div>
+</div>
+
+<!-- EXPIRED -->
+<div class="panel" id="p-expired">
+  <div class="pg-header">
+    <div class="pg-icon" style="background:var(--danger-lt)">⚠️</div>
+    <div><div class="pg-title">已到期證書</div><div class="pg-sub">Expired Certificates — 需要更新或確認的項目</div></div>
+  </div>
+  <div class="alert-grid" id="ag-expired"></div>
+</div>
+
+<!-- WARNING -->
+<div class="panel" id="p-warning">
+  <div class="pg-header">
+    <div class="pg-icon" style="background:var(--warning-lt)">🕐</div>
+    <div><div class="pg-title">6個月內即將到期</div><div class="pg-sub">Expiring within 180 days — 建議提前安排更新</div></div>
+  </div>
+  <div class="alert-grid" id="ag-warning"></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /layout -->
+<div id="toast"></div>
+
+
+<div id="toast"></div>
+<script>
+
+let DATA=[];
+const CAT_MAP={'產品認證':'prod','工廠認證':'factory','管理系統':'system'};
+const CAT_CSS={'prod':'cp','factory':'cf','system':'cs'};
+const CAT_TBL={'prod':['no','unit','name','certNo','issueDate','expDate','daysLeft','status','partCount']};
+
+// Table state per tab
+const TS={
+  prod:{data:[],filtered:[],sk:'no',sd:'asc',pg:1,pp:30},
+  factory:{data:[],filtered:[],sk:'no',sd:'asc',pg:1,pp:30},
+  system:{data:[],filtered:[],sk:'no',sd:'asc',pg:1,pp:30}
+};
+
+function init(raw){
+  const today=new Date();today.setHours(0,0,0,0);
+  DATA=raw.map(r=>{
+    let d=r.daysLeft;
+    if(r.expDate){const e=new Date(r.expDate);d=isNaN(e)?null:Math.round((e-today)/864e5);}
+    else d=null;
+    return{...r,daysLeft:d,status:d===null?'PASS':d<0?'NG':'PASS'};
+  });
+  renderAll();
+}
+
+function renderAll(){
+  const all=DATA, prod=DATA.filter(r=>r.category==='產品認證'),
+        fac=DATA.filter(r=>r.category==='工廠認證'),
+        sys=DATA.filter(r=>r.category==='管理系統');
+  const exp=DATA.filter(r=>r.daysLeft!==null&&r.daysLeft<0);
+  const warn=DATA.filter(r=>r.daysLeft!==null&&r.daysLeft>=0&&r.daysLeft<=180);
+  const parts=prod.reduce((s,r)=>s+(r.partCount||0),0);
+
+  // Sidebar badges
+  ['nb-prod','nb-factory','nb-system'].forEach((id,i)=>{
+    document.getElementById(id).textContent=[prod,fac,sys][i].length;
+  });
+  document.getElementById('nb-expired').textContent=exp.length;
+  document.getElementById('nb-warn').textContent=warn.length;
+
+  // Stats
+  document.getElementById('sv-total').textContent=all.length;
+  document.getElementById('sv-parts').textContent=parts;
+  document.getElementById('sv-exp').textContent=exp.length;
+  document.getElementById('sv-warn').textContent=warn.length;
+
+  // Cat tabs
+  const pe=prod.filter(r=>r.daysLeft!==null&&(r.daysLeft<0||(r.daysLeft>=0&&r.daysLeft<=180)));
+  const fe=fac.filter(r=>r.daysLeft!==null&&(r.daysLeft<0||(r.daysLeft>=0&&r.daysLeft<=180)));
+  const se=sys.filter(r=>r.daysLeft!==null&&(r.daysLeft<0||(r.daysLeft>=0&&r.daysLeft<=180)));
+  document.getElementById('ct-prod-cnt').textContent=prod.length;
+  document.getElementById('ct-prod-parts').textContent=parts;
+  document.getElementById('ct-prod-exp').textContent=pe.length;
+  document.getElementById('ct-fac-cnt').textContent=fac.length;
+  document.getElementById('ct-fac-exp').textContent=fe.length;
+  document.getElementById('ct-sys-cnt').textContent=sys.length;
+  document.getElementById('ct-sys-exp').textContent=se.length;
+
+  // Overview alerts (exp+warn, max 12)
+  const alerts=[...exp,...warn.filter(r=>r.daysLeft>=0)].sort((a,b)=>a.daysLeft-b.daysLeft).slice(0,12);
+  const ovEl=document.getElementById('ov-alerts');
+  ovEl.innerHTML=alerts.length?alerts.map(r=>mkAC(r)).join(''):'<div class="empty">✅ 目前無到期或即將到期的認證</div>';
+
+  // Expired page
+  document.getElementById('ag-expired').innerHTML=exp.length?exp.sort((a,b)=>a.daysLeft-b.daysLeft).map(r=>mkAC(r)).join(''):'<div class="empty">✅ 目前無已到期證書</div>';
+  // Warning page
+  document.getElementById('ag-warning').innerHTML=warn.length?warn.sort((a,b)=>a.daysLeft-b.daysLeft).map(r=>mkAC(r)).join(''):'<div class="empty">✅ 6個月內無即將到期證書</div>';
+
+  // Product table
+  TS.prod.data=[...prod];TS.prod.filtered=[...prod];TS.prod.pg=1;
+  sortTData('prod');renderTable('prod');
+
+  // Factory table
+  TS.factory.data=[...fac];TS.factory.filtered=[...fac];TS.factory.pg=1;
+  sortTData('factory');renderTable('factory');
+
+  // System table
+  TS.system.data=[...sys];TS.system.filtered=[...sys];TS.system.pg=1;
+  sortTData('system');renderTable('system');
+
+  // Date
+  document.getElementById('hDate').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+}
+
+function mkAC(r){
+  const isExp=r.daysLeft<0;
+  const catK=CAT_MAP[r.category]||'prod';
+  const catC=CAT_CSS[catK];
+  const catLabel=r.category;
+  return `<div class="ac ${isExp?'ac-exp':'ac-warn'}">
+    <div class="ac-r1">
+      <span class="ac-cat ${catC}">${catLabel}</span>
+      <span class="ac-name">${r.name}</span>
+      <span class="ac-pill ${isExp?'pill-e':'pill-w'}">${r.daysLeft}天</span>
+    </div>
+    <div class="ac-r2">
+      <span class="ac-tag"><strong>${r.unit}</strong></span>
+      <span class="ac-tag">證書: <strong>${r.certNo}</strong></span>
+      <span class="ac-tag">到期: <strong>${r.expDate||'—'}</strong></span>
+      ${r.partCount?`<span class="ac-tag">料號: <strong>${r.partCount}</strong></span>`:''}
+      ${r.note?`<span class="ac-tag" style="color:var(--warning)">📌 ${r.note}</span>`:''}
+    </div>
+  </div>`;
+}
+
+function renderCertCards(id,data){
+  const el=document.getElementById('cc-'+id);
+  if(!data.length){el.innerHTML='<div class="empty">無資料</div>';return;}
+  el.innerHTML=data.map(r=>{
+    let dc='d-ok',dt='永久有效';
+    if(r.daysLeft!==null){
+      dt=r.daysLeft+' 天';
+      if(r.daysLeft<0)dc='d-e';
+      else if(r.daysLeft<=180)dc='d-w';
+    }
+    return `<div class="cert-card">
+      <div class="cc-header">
+        <div class="cc-name">${r.name}</div>
+        <span class="sbadge ${r.status==='PASS'?'s-P':'s-N'}">${r.status}</span>
+      </div>
+      <div class="cc-body">
+        <div class="cc-row"><span class="cc-lbl">認證單位</span><span class="cc-val">${r.unit}</span></div>
+        <div class="cc-row"><span class="cc-lbl">證書號碼</span><span class="cc-val" style="font-family:Space Mono,monospace;font-size:11px">${r.certNo}</span></div>
+        <div class="cc-row"><span class="cc-lbl">取證日</span><span class="cc-val">${r.issueDate||'—'}</span></div>
+        <div class="cc-row"><span class="cc-lbl">到期日</span><span class="cc-val">${r.expDate||'永久有效'}</span></div>
+        <div class="cc-row"><span class="cc-lbl">剩餘</span><span class="cc-val ${dc}">${dt}</span></div>
+      </div>
+      ${r.note?`<div class="cc-note">📌 ${r.note}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// TABLE
+function filterTable(t){
+  const q=(document.getElementById('sb-'+t)||{}).value?.toLowerCase()||'';
+  TS[t].filtered=TS[t].data.filter(r=>!q||r.name.toLowerCase().includes(q)||r.certNo.toLowerCase().includes(q)||r.unit.toLowerCase().includes(q));
+  TS[t].pg=1;sortTData(t);renderTable(t);
+}
+function sortT(t,k){
+  TS[t].sd=TS[t].sk===k?(TS[t].sd==='asc'?'desc':'asc'):'asc';TS[t].sk=k;sortTData(t);renderTable(t);
+}
+function sortTData(t){
+  const{sk,sd}=TS[t];
+  TS[t].filtered.sort((a,b)=>{
+    let av=sk==='daysLeft'?(a.daysLeft??99999):sk==='partCount'?a.partCount:a[sk];
+    let bv=sk==='daysLeft'?(b.daysLeft??99999):sk==='partCount'?b.partCount:b[sk];
+    if(typeof av==='string')av=av.toLowerCase();if(typeof bv==='string')bv=bv.toLowerCase();
+    return sd==='asc'?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
+  });
+}
+function renderTable(t){
+  const{filtered,pg,pp}=TS[t];
+  const start=(pg-1)*pp,slice=filtered.slice(start,start+pp);
+  const UNIT_CSS={'ABS':'u-ABS','SGS':'u-SGS','DGUV':'u-DGUV','DNV':'u-DNV','愛吉諾':'u-AI','OSHCI':'u-OSHCI','CCS':'u-CCS','API':'u-API','TAF':'u-TAF'};
+  const isProd=(t==='prod');
+  document.getElementById('tb-'+t).innerHTML=slice.map(r=>{
+    let dc='d-ok',dt='永久有效';
+    if(r.daysLeft!==null){dt=r.daysLeft+' 天';if(r.daysLeft<0)dc='d-e';else if(r.daysLeft<=180)dc='d-w';else dc='d-ok';}
+    else dc='d-p';
+    const uc=UNIT_CSS[r.unit]||'';
+    const lastCol=isProd
+      ?`<td style="text-align:right"><span class="pc">${r.partCount||'—'}</span></td><td style="font-size:11px;color:${r.note?'var(--warning)':'var(--text3)'};">${r.note||'—'}</td>`
+      :`<td style="font-size:11px;color:${r.note?'var(--warning)':'var(--text3)'};">${r.note||'—'}</td>`;
+    return `<tr>
+      <td class="td-no">${r.no}</td>
+      <td><span class="unit-tag ${uc}">${r.unit}</span></td>
+      <td class="td-name">${r.name}</td>
+      <td style="font-family:Space Mono,monospace;font-size:10.5px;color:var(--text2)">${r.certNo}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${r.issueDate||'—'}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${r.expDate||'—'}</td>
+      <td class="dc ${dc}">${dt}</td>
+      <td><span class="sbadge ${r.status==='PASS'?'s-P':'s-N'}">${r.status}</span></td>
+      ${lastCol}
+    </tr>`;
+  }).join('');
+  const total=filtered.length,pages=Math.ceil(total/pp)||1;
+  document.getElementById('pi-'+t).textContent=(Math.min(start+1,total))+'–'+(Math.min(start+pp,total))+' / 共 '+total+' 筆';
+  let btns=`<button class="pb" onclick="goP('${t}',${pg-1})" ${pg<=1?'disabled':''}>‹</button>`;
+  for(let p=Math.max(1,pg-2);p<=Math.min(pages,pg+2);p++)btns+=`<button class="pb ${p===pg?'active':''}" onclick="goP('${t}',${p})">${p}</button>`;
+  btns+=`<button class="pb" onclick="goP('${t}',${pg+1})" ${pg>=pages?'disabled':''}>›</button>`;
+  document.getElementById('pb-'+t).innerHTML=btns;
+}
+function goP(t,p){const pages=Math.ceil(TS[t].filtered.length/TS[t].pp);if(p<1||p>pages)return;TS[t].pg=p;renderTable(t);}
+
+// NAVIGATION
+function go(pg,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+pg).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active','act-prod','act-factory','act-system','act-danger','act-warning'));
+  if(el){
+    const cls={ov:'active',prod:'active act-prod',factory:'active act-factory',system:'active act-system',expired:'active act-danger',warning:'active act-warning'}[pg]||'active';
+    el.className='nav-item '+cls;
+  }
+}
+
+// FILE IMPORT
+function handleFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const today=new Date();today.setHours(0,0,0,0);
+      const mapped=rows.map((r,i)=>{
+        const expRaw=r['到期日'];let expStr='',days=null;
+        if(expRaw&&String(expRaw).trim()){
+          const ed=expRaw instanceof Date?expRaw:new Date(String(expRaw).trim().replace(/\//g,'-'));
+          if(!isNaN(ed)){expStr=ed.toISOString().slice(0,10);days=Math.round((ed-today)/864e5);}
+        }
+        const issRaw=r['取證日'];let issStr='';
+        if(issRaw&&String(issRaw).trim()){
+          const id=issRaw instanceof Date?issRaw:new Date(String(issRaw).trim().replace(/\//g,'-'));
+          if(!isNaN(id))issStr=id.toISOString().slice(0,10);
+        }
+        return{no:r['項目']||(i+1),category:String(r['認證']||'').trim(),name:String(r['編號']||'').trim(),issueDate:issStr,expDate:expStr,unit:String(r['認證單位']||'').trim(),certNo:String(r['證書號碼']||'').trim(),daysLeft:days,status:days===null?'PASS':days<0?'NG':'PASS',partCount:parseInt(r['料號數量'])||0,note:String(r['備註']||'').trim()};
+      }).filter(r=>r.category);
+      init(mapped);showToast('✅ 成功匯入 '+mapped.length+' 筆資料');
+    }catch(err){console.error(err);showToast('❌ 匯入失敗，請確認格式正確');}
+    e.target.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+
+const SHEET_ID = '1QtJwP-_Wzn2NyLJeMWtDQK2Ig9PP97KgKmD5AghY-oA';
+
+function setStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--textw2)'; }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseCSVLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h.trim()] = (vals[idx] || '').trim(); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === ',' && !inQ) {
+      result.push(cur); cur = '';
+    } else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseDate(raw) {
+  if (!raw || !raw.trim()) return { str: '', days: null };
+  const s = raw.trim();
+  // Try various date formats
+  let d = null;
+  // Format: 2030-12-16 or 2030/12/16
+  if (/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(s)) {
+    d = new Date(s.replace(/\//g, '-').split(' ')[0]);
+  }
+  // Format: 2030/12/16 00:00:00
+  if (!d || isNaN(d)) d = new Date(s);
+  if (!d || isNaN(d)) return { str: '', days: null };
+  const today = new Date(); today.setHours(0,0,0,0);
+  return {
+    str: d.toISOString().slice(0,10),
+    days: Math.round((d - today) / 864e5)
+  };
+}
+
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  setStatus('載入中...', '#60a5fa');
+
+  // Use CSV export URL - works with "anyone with link can view"
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&id=${SHEET_ID}`;
+
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+
+    if (!text || text.length < 10) throw new Error('Empty response');
+
+    const rows = parseCSV(text);
+    if (rows.length === 0) throw new Error('No rows parsed');
+
+    const data = rows.map((r, i) => {
+      const exp = parseDate(r['到期日'] || r['到期日 '] || '');
+      const iss = parseDate(r['取證日'] || r['取證日 '] || '');
+      const status = exp.days === null ? 'PASS' : exp.days < 0 ? 'NG' : 'PASS';
+      const partRaw = r['料號數量'] || r['料號數量 '] || '';
+      return {
+        no: parseInt(r['項目']) || (i + 1),
+        category: (r['認證'] || '').trim(),
+        name: (r['編號'] || '').trim(),
+        issueDate: iss.str,
+        expDate: exp.str,
+        unit: (r['認證單位'] || '').trim(),
+        certNo: (r['證書號碼'] || '').trim(),
+        daysLeft: exp.days,
+        status,
+        partCount: parseInt(partRaw) || 0,
+        note: (r['備註'] || '').trim()
+      };
+    }).filter(r => r.category && r.name);
+
+    if (data.length === 0) throw new Error('No valid records after filter');
+
+    init(data);
+    const now = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+    setStatus(`✓ 已同步 ${now}`, '#86efac');
+
+  } catch(err) {
+    console.error('Load error:', err);
+    setStatus(`⚠ 載入失敗: ${err.message}`, '#fca5a5');
+    // Show error in UI
+    document.getElementById('sv-total').textContent = '!';
+    showToast('載入失敗：' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
+
+// Auto load on open
+loadData();
+
+</script>
+</body>
+</html>
